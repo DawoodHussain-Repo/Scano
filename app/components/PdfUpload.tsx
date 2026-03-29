@@ -105,18 +105,30 @@ export default function PdfUpload() {
     setPending(true);
 
     try {
-      const mockResponse = await new Promise<Verdict>((resolve) => {
-        setTimeout(() => {
-          resolve(buildMockVerdict(`verdict-${Date.now()}`));
-        }, 700);
+      const formData = new FormData();
+      formData.append("file", uploadedFile);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
       });
 
+      if (!response.ok) {
+        const errorJson = await response.json();
+        throw new Error(errorJson.error || "Upload failed");
+      }
+
+      const payload = await response.json();
+      console.log("Parsed PDF text:", payload.text);
+
+      const mockResponse = buildMockVerdict(`verdict-${Date.now()}`);
       localStorage.setItem(
         `scano-verdict:${mockResponse.id}`,
         JSON.stringify(mockResponse),
       );
       router.push(`/verdict/${mockResponse.id}`);
-    } catch {
+    } catch (error) {
+      console.error(error);
       setError("Failed to analyze file. Please try again.");
     } finally {
       setPending(false);

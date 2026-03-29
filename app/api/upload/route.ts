@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { extractText } from "unpdf";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,19 +20,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    if (file.type !== "application/pdf") {
+      return NextResponse.json(
+        { error: "Only PDFs supported for now" },
+        { status: 400 },
+      );
+    }
 
-    
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Extract text using unpdf
+    const { text, totalPages } = await extractText(uint8Array);
+
+    console.log("PDF text extracted:", text.slice(0, 200));
+
     return NextResponse.json({
       fileName: file.name,
       size: file.size,
       type: file.type,
+      text,
+      pages: totalPages,
     });
   } catch (err) {
-    console.error("Upload error", err);
+    console.error("Upload error:", err);
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to process file" },
+      { error: `Failed to process PDF: ${errorMessage}` },
       { status: 500 },
     );
   }
