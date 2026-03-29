@@ -18,10 +18,17 @@ export default function Home() {
       return;
     }
 
+    const tenMb = 10 * 1024 * 1024;
+    if (file.size > tenMb) {
+      setError("File size must be 10 MB or less.");
+      setUploadedFile(null);
+      setStatus("idle");
+      return;
+    }
+
     setError(null);
     setUploadedFile(file);
     setStatus("done");
-    // TODO: send file object to server or parser integration (future)
   }, []);
 
   const onSelectFile = useCallback(
@@ -120,6 +127,72 @@ export default function Home() {
           )}
 
           {error && <div className="upload-error">{error}</div>}
+
+          {uploadedFile && status === "done" && (
+            <div className="mt-6 flex gap-3">
+              <button
+                className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700"
+                onClick={async () => {
+                  if (!uploadedFile) return;
+                  setError(null);
+                  setStatus("idle");
+
+                  // mock upload and server processing with delay
+                  try {
+                    const mockResponse = await new Promise<{
+                      id: string;
+                      summary: string;
+                      score: "high" | "medium" | "low";
+                      risks: Array<{
+                        clause: string;
+                        explanation: string;
+                        severity: "high" | "medium" | "low";
+                      }>;
+                    }>((resolve) => {
+                      setTimeout(() => {
+                        resolve({
+                          id: `verdict-${Date.now()}`,
+                          summary:
+                            "This contract shows moderate risk in key indemnity sections.",
+                          score: "medium",
+                          risks: [
+                            {
+                              clause:
+                                "The indemnity clause delegates all risk to the vendor without capping liability.",
+                              explanation:
+                                "Uncapped indemnity obligations can result in unlimited financial exposure.",
+                              severity: "high",
+                            },
+                            {
+                              clause:
+                                "The automatic renewal clause lacks a 30-day cancellation window.",
+                              explanation:
+                                "You may be locked into the contract longer than expected.",
+                              severity: "medium",
+                            },
+                          ],
+                        });
+                      }, 800);
+                    });
+
+                    localStorage.setItem(
+                      `scano-verdict:${mockResponse.id}`,
+                      JSON.stringify(mockResponse),
+                    );
+
+                    window.location.href = `/verdict/${mockResponse.id}`;
+                  } catch {
+                    setError("Failed to analyze file. Please try again.");
+                  }
+                }}
+              >
+                Analyze Document
+              </button>
+              <span className="self-center text-sm text-slate-600">
+                (Mock flow; real API integration later)
+              </span>
+            </div>
+          )}
 
           <div className="upload-note">
             <p>
