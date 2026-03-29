@@ -1,8 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --muted: #64748b;
+  --border: #cbd5e1;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --accent: #0ea5e9;
+  --success: #16a34a;
+  --error: #dc2626;
+
+  --navbar-bg: #ffffff;
+  --footer-bg: #f1f5f9;
 }
 
 @theme inline {
@@ -14,8 +25,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #ededed;
     --foreground: #ededed;
+    --surface: rgb(220, 255, 194);
+    --muted: #94a3b8;
+    --border: #334155;
+    --navbar-bg: #ededed;
+    --footer-bg: rgb(220, 255, 194);
   }
 }
 
@@ -23,4 +39,137 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-raleway), Arial, Helvetica, sans-serif;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.navbar {
+  background: var(--navbar-bg);
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.navbar-inner {
+  @apply mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4;
+}
+
+.nav-link {
+  @apply text-sm font-medium text-slate-700 hover:text-slate-900;
+}
+
+.portfolio-title {
+  @apply text-xl font-bold text-slate-900;
+}
+
+.main-panel {
+  @apply flex-1 w-full mx-auto max-w-6xl px-6 py-8;
+}
+
+.upload-panel {
+  @apply w-full rounded-2xl border border-slate-200 bg-white p-10 shadow-sm;
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.upload-box {
+  @apply mt-8 rounded-xl border-2 border-dashed p-10 text-center transition cursor-pointer;
+}
+
+.upload-box-idle {
+  border-color: var(--border);
+  background: #f8fafc;
+}
+
+.upload-box-active {
+  border-color: var(--primary);
+  background: #eff6ff;
+}
+
+.upload-success {
+  @apply mt-6 rounded-lg border p-4 text-left;
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+}
+
+.upload-error {
+  @apply mt-6 rounded-lg border p-4 text-left text-sm;
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: var(--error);
+}
+
+.upload-note {
+  @apply mt-8 text-sm;
+  color: var(--muted);
+}
+
+.footer {
+  background: var(--footer-bg);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.footer-inner {
+  @apply mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 text-sm;
+}
+
+/* Global reusable Tailwind-style utility components */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.main-panel {
+  @apply flex-1 w-full mx-auto max-w-6xl p-10;
+  background: #ffffff;
+}
+
+.upload-panel {
+  @apply w-full rounded-2xl border border-slate-200 p-10 shadow-sm;
+  background: var(--surface);
+  border-color: var(--border);
+  min-height: 360px;
+}
+
+.upload-box {
+  @apply mt-8 rounded-xl border-2 border-dashed p-8 text-center transition cursor-pointer max-w-4xl mx-auto;
+  background: #ffffff;
+  border-color: var(--border);
+}
+
+.upload-box-idle {
+  background: #f8fafc;
+  border-color: var(--border);
+}
+
+.upload-box-active {
+  background: #eff6ff;
+  border-color: var(--primary);
+}
+
+.upload-success {
+  @apply mt-6 rounded-lg border p-4 text-left;
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+}
+
+.upload-error {
+  @apply mt-6 rounded-lg border p-4 text-left text-sm;
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: var(--error);
+}
+
+.upload-note {
+  @apply mt-8 text-sm;
+  color: var(--muted);
 }
