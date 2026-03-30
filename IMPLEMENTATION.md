@@ -1,7 +1,7 @@
 # Scano - Contract Risk Analysis Implementation
 
 ## Overview
-A production-ready RAG-powered contract analysis system using Next.js 16, HuggingFace embeddings, DataStax vector database, and Gemini AI.
+A production-ready RAG-powered contract analysis system using Next.js 16, HuggingFace embeddings, DataStax vector database, and Groq AI (Llama 3.3).
 
 ## Architecture
 
@@ -34,9 +34,29 @@ A production-ready RAG-powered contract analysis system using Next.js 16, Huggin
    - Automatic collection management
 
 6. **Contract Analyzer** (`app/lib/contractAnalyzer.ts`)
-   - Gemini 1.5 Flash for analysis
+   - Groq AI with Llama 3.3 70B
    - RAG-based risk assessment
    - Structured JSON output
+
+## UI Components
+
+### LoadingSpinner
+- Reusable spinner with size variants (sm/md/lg)
+- Smooth animations
+- Accessible with ARIA labels
+
+### ProgressIndicator
+- Multi-step progress visualization
+- Real-time status updates
+- Visual feedback with icons and colors
+
+### PdfUpload (Enhanced)
+- Drag-and-drop file upload
+- Real-time progress tracking
+- Step-by-step visual feedback
+- Error handling with icons
+- Disabled state during processing
+- Loading states with spinners
 
 ## API Endpoints
 
@@ -49,7 +69,7 @@ A production-ready RAG-powered contract analysis system using Next.js 16, Huggin
 
 ### POST /api/analyze
 - Retrieves relevant chunks via vector search
-- Analyzes contract with Gemini AI
+- Analyzes contract with Groq AI
 - Returns structured risk assessment:
   - Dangerous clauses
   - Missing protections
@@ -61,8 +81,12 @@ A production-ready RAG-powered contract analysis system using Next.js 16, Huggin
 ### PdfUpload Component
 - Drag-and-drop file upload
 - File validation (PDF, 10MB limit)
-- Real-time analysis progress
+- Real-time analysis progress with 3 steps:
+  1. Upload & Extract
+  2. Process & Embed
+  3. AI Analysis
 - Error handling and user feedback
+- Loading spinners and progress indicators
 
 ### Verdict Page
 - Dynamic route: `/verdict/[id]`
@@ -76,7 +100,7 @@ A production-ready RAG-powered contract analysis system using Next.js 16, Huggin
 - **Language**: TypeScript
 - **Embeddings**: HuggingFace Inference API
 - **Vector DB**: DataStax Astra DB
-- **AI Analysis**: Google Gemini 1.5 Flash
+- **AI Analysis**: Groq (Llama 3.3 70B)
 - **PDF Processing**: unpdf
 - **Text Processing**: LangChain
 
@@ -85,7 +109,7 @@ A production-ready RAG-powered contract analysis system using Next.js 16, Huggin
 ```env
 ASTRA_DB_API_ENDPOINT=<your-datastax-endpoint>
 ASTRA_DB_APPLICATION_TOKEN=<your-datastax-token>
-GOOGLE_API_KEY=<your-gemini-api-key>
+GROQ_API_KEY=<your-groq-api-key>
 HUGGINGFACE_API_KEY=<your-hf-api-key>
 ```
 
@@ -98,6 +122,16 @@ HUGGINGFACE_API_KEY=<your-hf-api-key>
 ✅ Real-time processing feedback
 ✅ Production-ready architecture
 ✅ Free-tier API usage
+✅ Beautiful, responsive UI
+✅ Progress tracking with visual feedback
+✅ Blazing fast analysis with Groq
+
+## Performance
+
+- **Groq AI**: Sub-second response times
+- **HuggingFace**: Fast embedding generation
+- **DataStax**: Efficient vector search
+- **Overall**: Complete analysis in ~5-10 seconds
 
 ## Commit History
 
@@ -112,13 +146,20 @@ HUGGINGFACE_API_KEY=<your-hf-api-key>
 9. `feat: integrate real AI analysis in PDF upload component`
 10. `feat: add real-time verdict loading from localStorage`
 11. `chore: update dependencies for HuggingFace and LangChain`
+12. `docs: add comprehensive implementation documentation`
+13. `feat: replace Gemini with Groq (Llama 3.1) for faster analysis`
+14. `fix: update to Llama 3.3 model (3.1 decommissioned)`
+15. `feat: add reusable loading spinner component`
+16. `feat: add progress indicator component with step tracking`
+17. `feat: enhance PDF upload UI with progress tracking and better UX`
 
 ## Next Steps
 
 - [ ] Add user authentication
 - [ ] Implement contract history
 - [ ] Add export functionality (PDF/JSON)
-- [ ] Enhance UI with animations
 - [ ] Add batch processing
 - [ ] Implement caching layer
 - [ ] Add analytics dashboard
+- [ ] Add contract comparison feature
+- [ ] Implement email notifications
