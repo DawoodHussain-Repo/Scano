@@ -1,4 +1,4 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatGroq } from "@langchain/groq";
 import { retrieveRelevantChunks } from "./vectorStore";
 
 interface ContractIssue {
@@ -7,9 +7,9 @@ interface ContractIssue {
   severity: "high" | "medium" | "low";
 }
 
-const model = new ChatGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_API_KEY!,
-  model: "gemini-1.5-flash-latest",
+const model = new ChatGroq({
+  apiKey: process.env.GROQ_API_KEY!,
+  model: "llama-3.1-70b-versatile",
   temperature: 0.1,
 });
 
@@ -33,50 +33,45 @@ Contract clauses:
 export async function analyzeContract(
   fileName: string
 ): Promise<ContractIssue[]> {
-  try {
-    // Retrieve relevant chunks using vector search with targeted queries
-    const queries = [
-      "liability clauses and indemnification",
-      "payment terms and intellectual property",
-      "termination and dispute resolution",
-      "warranties and representations",
-    ];
+  // Retrieve relevant chunks using vector search with targeted queries
+  const queries = [
+    "liability clauses and indemnification",
+    "payment terms and intellectual property",
+    "termination and dispute resolution",
+    "warranties and representations",
+  ];
 
-    const allChunks: string[] = [];
-    for (const query of queries) {
-      const chunks = await retrieveRelevantChunks(query, 3);
-      allChunks.push(...chunks);
-    }
-
-    // Remove duplicates
-    const uniqueChunks = [...new Set(allChunks)];
-
-    if (uniqueChunks.length === 0) {
-      throw new Error("No contract data found for analysis");
-    }
-
-    const context = uniqueChunks.join("\n\n---\n\n");
-
-    // Generate analysis using Gemini
-    const prompt = ANALYSIS_PROMPT.replace("{context}", context);
-    const result = await model.invoke(prompt);
-
-    // Parse JSON response
-    const content =
-      typeof result.content === "string"
-        ? result.content
-        : JSON.stringify(result.content);
-
-    // Extract JSON from response (handle markdown code blocks)
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error("No valid JSON array found in response");
-    }
-
-    const issues: ContractIssue[] = JSON.parse(jsonMatch[0]);
-    return issues;
-  } catch (error) {
-    console.error("Error analyzing contract:", error);
-    throw error;
+  const allChunks: string[] = [];
+  for (const query of queries) {
+    const chunks = await retrieveRelevantChunks(query, 3);
+    allChunks.push(...chunks);
   }
+
+  // Remove duplicates
+  const uniqueChunks = [...new Set(allChunks)];
+
+  if (uniqueChunks.length === 0) {
+    throw new Error("No contract data found for analysis");
+  }
+
+  const context = uniqueChunks.join("\n\n---\n\n");
+
+  // Generate analysis using Groq
+  const prompt = ANALYSIS_PROMPT.replace("{context}", context);
+  const result = await model.invoke(prompt);
+
+  // Parse JSON response
+  const content =
+    typeof result.content === "string"
+      ? result.content
+      : JSON.stringify(result.content);
+
+  // Extract JSON from response (handle markdown code blocks)
+  const jsonMatch = content.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) {
+    throw new Error("No valid JSON array found in response");
+  }
+
+  const issues: ContractIssue[] = JSON.parse(jsonMatch[0]);
+  return issues;
 }
