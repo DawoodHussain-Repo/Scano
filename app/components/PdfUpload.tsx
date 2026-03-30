@@ -2,8 +2,11 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "./LoadingSpinner";
+import ProgressIndicator from "./ProgressIndicator";
 
 type UploadState = "idle" | "dragging" | "done";
+type ProcessingStep = "uploading" | "embedding" | "analyzing" | "complete";
 
 type Verdict = {
   id: string;
@@ -21,6 +24,7 @@ export default function PdfUpload() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<UploadState>("idle");
   const [pending, setPending] = useState(false);
+  const [currentStep, setCurrentStep] = useState<ProcessingStep | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
 
@@ -71,6 +75,7 @@ export default function PdfUpload() {
 
     setError(null);
     setPending(true);
+    setCurrentStep("uploading");
 
     try {
       const formData = new FormData();
@@ -89,7 +94,10 @@ export default function PdfUpload() {
       const payload = await response.json();
       console.log("PDF uploaded:", payload);
 
+      setCurrentStep("embedding");
+
       // Now analyze the contract
+      setCurrentStep("analyzing");
       const analyzeResponse = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,6 +111,8 @@ export default function PdfUpload() {
 
       const analysisResult = await analyzeResponse.json();
       console.log("Contract analysis:", analysisResult);
+
+      setCurrentStep("complete");
 
       // Build verdict from real analysis
       const verdictId = `verdict-${Date.now()}`;
@@ -126,14 +136,54 @@ export default function PdfUpload() {
         `scano-verdict:${verdict.id}`,
         JSON.stringify(verdict)
       );
-      router.push(`/verdict/${verdict.id}`);
+
+      // Small delay to show completion
+      setTimeout(() => {
+        router.push(`/verdict/${verdict.id}`);
+      }, 500);
     } catch (error) {
       console.error(error);
-      setError("Failed to analyze file. Please try again.");
+      setError(
+        error instanceof Error ? error.message : "Failed to analyze file. Please try again."
+      );
+      setCurrentStep(null);
     } finally {
       setPending(false);
     }
   }, [uploadedFile, router]);
+
+  const progressSteps: Array<{
+    label: string;
+    status: "pending" | "active" | "complete";
+  }> = [
+    {
+      label: "Upload",
+      status:
+        currentStep === "uploading"
+          ? "active"
+          : currentStep && ["embedding", "analyzing", "complete"].includes(currentStep)
+            ? "complete"
+            : "pending",
+    },
+    {
+      label: "Process",
+      status:
+        currentStep === "embedding"
+          ? "active"
+          : currentStep && ["analyzing", "complete"].includes(currentStep)
+            ? "complete"
+            : "pending",
+    },
+    {
+      label: "Analyze",
+      status:
+        currentStep === "analyzing"
+          ? "active"
+          : currentStep === "complete"
+            ? "complete"
+            : "pending",
+    },
+  ];
 
   return (
     <section className="upload-panel">
@@ -141,8 +191,10 @@ export default function PdfUpload() {
         Scano Contract Verdict
       </h1>
       <p className="mt-3 text-slate-600">
-        Upload a contract PDF to get started.
+        Upload a contract PDF to get AI-powered risk analysis.
       </p>
+
+      {pending && <ProgressIndicator steps={progressSteps} />}
 
       <input
         ref={fileInputRef}
@@ -150,21 +202,28 @@ export default function PdfUpload() {
         accept="application/pdf"
         className="hidden"
         onChange={onSelectFile}
+        disabled={pending}
       />
 
       <div
-        className={`upload-box ${status === "dragging" ? "upload-box-active" : "upload-box-idle"}`}
+        className={`upload-box ${
+          status === "dragging"
+            ? "upload-box-active"
+            : pending
+              ? "opacity-50 cursor-not-allowed"
+              : "upload-box-idle"
+        }`}
         onDragOver={(e) => {
           e.preventDefault();
-          setStatus("dragging");
+          if (!pending) setStatus("dragging");
         }}
-        onDragLeave={() => setStatus("idle")}
+        onDragLeave={() => !pending && setStatus("idle")}
         onDrop={onDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !pending && fileInputRef.current?.click()}
         role="button"
-        tabIndex={0}
+        tabIndex={pending ? -1 : 0}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (!pending && (e.key === "Enter" || e.key === " ")) {
             fileInputRef.current?.click();
           }
         }}
@@ -177,7 +236,7 @@ export default function PdfUpload() {
         </p>
       </div>
 
-      {uploadedFile && (
+      {uploadedFile && !pending && (
         <div className="upload-success">
           <p className="font-semibold text-green-700">
             File ready for processing
@@ -189,26 +248,65 @@ export default function PdfUpload() {
         </div>
       )}
 
-      {error && <div className="upload-error">{error}</div>}
+      {error && (
+        <div className="upload-error">
+          <svg
+            className="w-5 h-5 inline-block mr-2"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+          {error}
+        </div>
+      )}
 
-      {uploadedFile && status === "done" && (
+      {uploadedFile && status === "done" && !pending && (
         <div className="mt-6 flex items-center gap-3">
           <button
-            className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700"
+            className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
             onClick={analyzeFile}
-            disabled={pending}
           >
-            {pending ? "Analyzing..." : "Analyze Document"}
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Analyze Document
           </button>
           <span className="text-sm text-slate-600">
-            AI-powered contract risk analysis
+            Powered by Groq AI & HuggingFace
           </span>
+        </div>
+      )}
+
+      {pending && (
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <LoadingSpinner size="lg" />
+          <p className="text-sm text-slate-600 font-medium">
+            {currentStep === "uploading" && "Uploading and extracting text..."}
+            {currentStep === "embedding" && "Generating embeddings..."}
+            {currentStep === "analyzing" && "Analyzing contract with AI..."}
+            {currentStep === "complete" && "Analysis complete!"}
+          </p>
         </div>
       )}
 
       <div className="upload-note">
         <p>
-          RAG-powered analysis using Gemini AI and DataStax vector search.
+          RAG-powered analysis using Groq (Llama 3.3) and DataStax vector search.
         </p>
       </div>
     </section>
