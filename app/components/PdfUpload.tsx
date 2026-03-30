@@ -16,38 +16,6 @@ type Verdict = {
   }>;
 };
 
-function buildMockVerdict(id: string): Verdict {
-  return {
-    id,
-    summary:
-      "This contract shows moderate risk in key indemnity and renewal clauses.",
-    score: "medium",
-    risks: [
-      {
-        clause:
-          "The indemnity clause delegates all risk to the vendor without capping liability.",
-        explanation:
-          "Uncapped indemnity obligations can result in unlimited financial exposure.",
-        severity: "high",
-      },
-      {
-        clause:
-          "The automatic renewal clause lacks a 30-day cancellation window.",
-        explanation:
-          "You may be locked into the contract longer than expected.",
-        severity: "medium",
-      },
-      {
-        clause:
-          "Payment terms allow invoice due date at 90 days with no late fee cap.",
-        explanation:
-          "Long unsecured payment terms can strain cash flow and increase risk.",
-        severity: "low",
-      },
-    ],
-  };
-}
-
 export default function PdfUpload() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -119,14 +87,46 @@ export default function PdfUpload() {
       }
 
       const payload = await response.json();
-      console.log("Parsed PDF text:", payload.text);
+      console.log("PDF uploaded:", payload);
 
-      const mockResponse = buildMockVerdict(`verdict-${Date.now()}`);
+      // Now analyze the contract
+      const analyzeResponse = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: uploadedFile.name }),
+      });
+
+      if (!analyzeResponse.ok) {
+        const errorJson = await analyzeResponse.json();
+        throw new Error(errorJson.error || "Analysis failed");
+      }
+
+      const analysisResult = await analyzeResponse.json();
+      console.log("Contract analysis:", analysisResult);
+
+      // Build verdict from real analysis
+      const verdictId = `verdict-${Date.now()}`;
+      const verdict: Verdict = {
+        id: verdictId,
+        summary: `Found ${analysisResult.totalIssues} issues: ${analysisResult.highSeverity} high, ${analysisResult.mediumSeverity} medium, ${analysisResult.lowSeverity} low severity.`,
+        score:
+          analysisResult.highSeverity > 0
+            ? "high"
+            : analysisResult.mediumSeverity > 2
+              ? "medium"
+              : "low",
+        risks: analysisResult.issues.map((issue: any) => ({
+          clause: issue.clause,
+          explanation: issue.issue,
+          severity: issue.severity,
+        })),
+      };
+
       localStorage.setItem(
-        `scano-verdict:${mockResponse.id}`,
-        JSON.stringify(mockResponse),
+        `scano-verdict:${verdict.id}`,
+        JSON.stringify(verdict)
       );
-      router.push(`/verdict/${mockResponse.id}`);
+      router.push(`/verdict/${verdict.id}`);
     } catch (error) {
       console.error(error);
       setError("Failed to analyze file. Please try again.");
@@ -201,13 +201,15 @@ export default function PdfUpload() {
             {pending ? "Analyzing..." : "Analyze Document"}
           </button>
           <span className="text-sm text-slate-600">
-            (Mock flow; real API integration later)
+            AI-powered contract risk analysis
           </span>
         </div>
       )}
 
       <div className="upload-note">
-        <p>Next: integrate PDF parse + server &ldquo;verdict&rdquo; engine.</p>
+        <p>
+          RAG-powered analysis using Gemini AI and DataStax vector search.
+        </p>
       </div>
     </section>
   );
