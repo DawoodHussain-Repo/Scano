@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Shield, FileText, Info, AlertTriangle, AlertCircle, CheckCircle, Plus, Printer } from "lucide-react";
 
 type Verdict = {
   id: string;

@@ -2,63 +2,58 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Shield, Home, Upload, Sparkles } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 border-b border-white/10">
+    <nav className="bg-white border-b border-slate-200 backdrop-blur-sm bg-white/80 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl blur-sm opacity-50 group-hover:opacity-75 transition-opacity" />
+              <div className="relative w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Shield className="w-6 h-6 text-white" strokeWidth={2.5} />
+              </div>
             </div>
-            <span className="text-xl font-bold text-white group-hover:text-blue-300 transition-colors">
+            <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-indigo-600 transition-all">
               Scano
             </span>
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
             <Link
               href="/"
-              className={`text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 pathname === "/"
-                  ? "text-white"
-                  : "text-slate-300 hover:text-white"
+                  ? "bg-slate-100 text-slate-900"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              Home
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Home</span>
             </Link>
             <Link
               href="/upload"
-              className={`text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 pathname === "/upload"
-                  ? "text-white"
-                  : "text-slate-300 hover:text-white"
+                  ? "bg-slate-100 text-slate-900"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              Upload
+              <Upload className="w-4 h-4" />
+              <span className="hidden sm:inline">Upload</span>
             </Link>
             <Link
               href="/upload"
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 ml-2"
             >
-              Analyze Contract
+              <Sparkles className="w-4 h-4" />
+              <span>Analyze</span>
             </Link>
           </div>
         </div>

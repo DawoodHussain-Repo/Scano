@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Upload, FileText, CheckCircle2, XCircle, Sparkles, AlertCircle } from "lucide-react";
 import LoadingSpinner from "./LoadingSpinner";
 import ProgressIndicator from "./ProgressIndicator";
 
@@ -88,6 +89,13 @@ export default function PdfUpload() {
 
       if (!response.ok) {
         const errorJson = await response.json();
+        
+        // Handle rate limiting
+        if (response.status === 429) {
+          const resetTime = errorJson.resetTime ? new Date(errorJson.resetTime).toLocaleTimeString() : "later";
+          throw new Error(`Rate limit exceeded. Please try again at ${resetTime}.`);
+        }
+        
         throw new Error(errorJson.error || "Upload failed");
       }
 
@@ -106,6 +114,13 @@ export default function PdfUpload() {
 
       if (!analyzeResponse.ok) {
         const errorJson = await analyzeResponse.json();
+        
+        // Handle rate limiting
+        if (analyzeResponse.status === 429) {
+          const resetTime = errorJson.resetTime ? new Date(errorJson.resetTime).toLocaleTimeString() : "later";
+          throw new Error(`Rate limit exceeded. Please try again at ${resetTime}.`);
+        }
+        
         throw new Error(errorJson.error || "Analysis failed");
       }
 
@@ -240,20 +255,11 @@ export default function PdfUpload() {
         >
           {/* Upload Icon */}
           <div className="mb-6">
-            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <svg
-                className="w-10 h-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
+            <div className="relative w-20 h-20 mx-auto">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl blur-md opacity-50" />
+              <div className="relative w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Upload className="w-10 h-10 text-white" strokeWidth={2} />
+              </div>
             </div>
           </div>
 
@@ -273,19 +279,7 @@ export default function PdfUpload() {
                 fileInputRef.current?.click();
               }}
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+              <FileText className="w-5 h-5" />
               Select PDF File
             </button>
           )}
@@ -296,17 +290,7 @@ export default function PdfUpload() {
           <div className="mt-6 p-6 bg-green-50 border-2 border-green-200 rounded-xl">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <CheckCircle2 className="w-6 h-6 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-green-900 mb-1">
@@ -326,17 +310,7 @@ export default function PdfUpload() {
           <div className="mt-6 p-6 bg-red-50 border-2 border-red-200 rounded-xl">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <svg
-                  className="w-6 h-6 text-red-600"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <XCircle className="w-6 h-6 text-red-600" strokeWidth={2.5} />
               </div>
               <div>
                 <p className="font-semibold text-red-900 mb-1">Error</p>
@@ -353,19 +327,7 @@ export default function PdfUpload() {
               onClick={analyzeFile}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
+              <Sparkles className="w-6 h-6" />
               Analyze Contract
             </button>
             <button
