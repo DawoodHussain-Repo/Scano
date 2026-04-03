@@ -1,6 +1,5 @@
 import { ChatGroq } from "@langchain/groq";
-import { generateEmbeddings } from "./embeddingService";
-import { vectorStore } from "./inMemoryVectorStore";
+import { searchSimilar } from "./inMemoryVectorStore";
 
 interface ContractIssue {
   clause: string;
@@ -44,12 +43,9 @@ export async function analyzeContract(
 
   const allChunks: string[] = [];
   for (const query of queries) {
-    // Generate embedding for query
-    const [queryEmbedding] = await generateEmbeddings([query]);
-    
-    // Search in-memory vector store
-    const results = await vectorStore.search(queryEmbedding, 3);
-    allChunks.push(...results.map((r) => r.text));
+    // Search using LangChain MemoryVectorStore
+    const chunks = await searchSimilar(query, 3);
+    allChunks.push(...chunks);
   }
 
   // Remove duplicates

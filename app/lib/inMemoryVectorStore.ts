@@ -1,111 +1,55 @@
 /**
- * In-memory vector store for session-based contract analysis
- * No external dependencies, perfect for portfolio demos
+ * In-memory vector store using LangChain's MemoryVectorStore
+ * Session-based storage with no external dependencies
  */
 
-interface VectorDocument {
-  id: string;
-  text: string;
-  embedding: number[];
-  metadata: {
-    fileName: string;
-    chunkIndex: number;
-  };
-}
+import { MemoryVectorStore } from "@langchain/classic/vectorstores/memory";
+import { HuggingFaceInferenceEmbeddings } from "@langchain/community/embeddings/hf";
 
-class InMemoryVectorStore {
-  private documents: VectorDocument[] = [];
-
-  /**
-   * Store document chunks with embeddings
-   */
-  async storeChunks(
-    fileName: string,
-    chunks: string[],
-    embeddings: number[][]
-  ): Promise<number> {
-    if (chunks.length !== embeddings.length) {
-      throw new Error("Chunks and embeddings length mismatch");
-    }
-
-    // Clear previous documents for this session
-    this.documents = [];
-
-    // Store new documents
-    for (let i = 0; i < chunks.length; i++) {
-      this.documents.push({
-        id: `${fileName}_chunk_${i}`,
-        text: chunks[i],
-        embedding: embeddings[i],
-        metadata: {
-          fileName,
-          chunkIndex: i,
-        },
-      });
-    }
-
-    return chunks.length;
-  }
-
-  /**
-   * Search for similar documents using cosine similarity
-   */
-  async search(
-    queryEmbedding: number[],
-    topK: number = 5
-  ): Promise<Array<{ text: string; score: number }>> {
-    if (this.documents.length === 0) {
-      return [];
-    }
-
-    // Calculate cosine similarity for each document
-    const results = this.documents.map((doc) => ({
-      text: doc.text,
-      score: this.cosineSimilarity(queryEmbedding, doc.embedding),
-    }));
-
-    // Sort by similarity score (descending) and return top K
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK);
-  }
-
-  /**
-   * Calculate cosine similarity between two vectors
-   */
-  private cosineSimilarity(vecA: number[], vecB: number[]): number {
-    if (vecA.length !== vecB.length) {
-      throw new Error("Vectors must have same length");
-    }
-
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-
-    for (let i = 0; i < vecA.length; i++) {
-      dotProduct += vecA[i] * vecB[i];
-      normA += vecA[i] * vecA[i];
-      normB += vecB[i] * vecB[i];
-    }
-
-    const denominator = Math.sqrt(normA) * Math.sqrt(normB);
-    return denominator === 0 ? 0 : dotProduct / denominator;
-  }
-
-  /**
-   * Clear all stored documents
-   */
-  clear(): void {
-    this.documents = [];
-  }
-
-  /**
-   * Get total number of stored documents
-   */
-  size(): number {
-    return this.documents.length;
-  }
-}
+// Initialize embeddings model
+const embeddings = new HuggingFaceInferenceEmbeddings({
+  apiKey: process.env.HUGGINGFACE_API_KEY!,
+  model: "sentence-transformers/all-MiniLM-L6-v2",
+});
 
 // Singleton instance for the session
-export const vectorStore = new InMemoryVectorStore();
+let vectorStore: MemoryVectorStore | null = null;
+
+/**
+ * Store document chunks in memory vector store
+ */
+export async function storeChunks(
+  fileName: string,
+  chunks: string[]
+): Promise<number> {
+  // Create new vector store from documents
+  vectorStore = await MemoryVectorStore.fromTexts(
+    chunks,
+    chunks.map((_, i) => ({ fileName, chunkIndex: i })),
+    embeddings
+  );
+
+  return chunks.length;
+}
+
+/**
+ * Search for similar documents
+ */
+export async function searchSimilar(
+  query: string,
+  topK: number = 5
+): Promise<string[]> {
+  if (!vectorStore) {
+    return [];
+  }
+
+  const results = await vectorStore.similaritySearch(query, topK);
+  return results.map((doc) => doc.pageContent);
+}
+
+/**
+ * Clear the vector store
+ */
+export function clearStore(): void {
+  vectorStore = null;
+}

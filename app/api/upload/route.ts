@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractPDFContent } from "@/app/lib/pdfService";
 import { chunkText } from "@/app/lib/textChunker";
-import { generateEmbeddings } from "@/app/lib/embeddingService";
-import { vectorStore } from "@/app/lib/inMemoryVectorStore";
+import { storeChunks } from "@/app/lib/inMemoryVectorStore";
 
 export const runtime = "nodejs";
 
@@ -44,16 +43,8 @@ export async function POST(request: NextRequest) {
     const chunks = await chunkText(text);
     console.log(`Split into ${chunks.length} chunks`);
 
-    // Generate embeddings for all chunks
-    const embeddings = await generateEmbeddings(chunks);
-    console.log(`Generated ${embeddings.length} embeddings`);
-
-    // Store in in-memory vector store
-    const chunksStored = await vectorStore.storeChunks(
-      file.name,
-      chunks,
-      embeddings
-    );
+    // Store in LangChain MemoryVectorStore (handles embeddings internally)
+    const chunksStored = await storeChunks(file.name, chunks);
 
     console.log(`Stored ${chunksStored} chunks in memory for ${file.name}`);
 
