@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractPDFContent } from "@/app/lib/pdfService";
-import { storeDocumentChunks } from "@/app/lib/vectorStore";
+import { chunkText } from "@/app/lib/textChunker";
+import { generateEmbeddings } from "@/app/lib/embeddingService";
+import { vectorStore } from "@/app/lib/inMemoryVectorStore";
 
 export const runtime = "nodejs";
 
@@ -38,10 +40,22 @@ export async function POST(request: NextRequest) {
     console.log("PDF text extracted:", text.slice(0, 200));
     console.log(`Pages: ${totalPages}, Has tables: ${hasStructuredContent}`);
 
-    // Store chunks in DataStax vector database
-    const { chunksStored } = await storeDocumentChunks(file.name, text);
+    // Split text into chunks
+    const chunks = await chunkText(text);
+    console.log(`Split into ${chunks.length} chunks`);
 
-    console.log(`Stored ${chunksStored} chunks for ${file.name}`);
+    // Generate embeddings for all chunks
+    const embeddings = await generateEmbeddings(chunks);
+    console.log(`Generated ${embeddings.length} embeddings`);
+
+    // Store in in-memory vector store
+    const chunksStored = await vectorStore.storeChunks(
+      file.name,
+      chunks,
+      embeddings
+    );
+
+    console.log(`Stored ${chunksStored} chunks in memory for ${file.name}`);
 
     return NextResponse.json({
       fileName: file.name,
