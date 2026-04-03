@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ScanoLayout from "../../components/ScanoLayout";
 import VerdictCard from "../../components/VerdictCard";
 import { useParams, useRouter } from "next/navigation";
 
@@ -52,39 +51,37 @@ export default function VerdictPage() {
 
   if (loading) {
     return (
-      <ScanoLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading verdict...</p>
-          </div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading verdict...</p>
         </div>
-      </ScanoLayout>
+      </div>
     );
   }
 
   if (error || !verdict) {
     return (
-      <ScanoLayout>
-        <div className="max-w-2xl mx-auto mt-12 p-6 bg-red-50 border border-red-200 rounded-lg">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full p-6 bg-red-50 border border-red-200 rounded-lg">
           <h2 className="text-xl font-semibold text-red-800 mb-2">
             Error Loading Verdict
           </h2>
           <p className="text-red-700 mb-4">{error || "Verdict not found"}</p>
           <button
-            onClick={() => router.push("/")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            onClick={() => router.push("/upload")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Return to Upload
+            Upload New Contract
           </button>
         </div>
-      </ScanoLayout>
+      </div>
     );
   }
 
   return (
-    <ScanoLayout>
+    <div className="min-h-screen bg-slate-50 py-12">
       <VerdictCard verdict={verdict} />
-    </ScanoLayout>
+    </div>
   );
 }
