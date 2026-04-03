@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractText } from "unpdf";
+import { extractPDFContent } from "@/app/lib/pdfService";
 import { storeDocumentChunks } from "@/app/lib/vectorStore";
 
 export const runtime = "nodejs";
@@ -31,12 +31,12 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 
-    // Extract text using unpdf with merged pages
-    const { text, totalPages } = await extractText(uint8Array, {
-      mergePages: true,
-    });
+    // Extract text using enhanced PDF service
+    const { text, totalPages, hasStructuredContent } =
+      await extractPDFContent(uint8Array);
 
     console.log("PDF text extracted:", text.slice(0, 200));
+    console.log(`Pages: ${totalPages}, Has tables: ${hasStructuredContent}`);
 
     // Store chunks in DataStax vector database
     const { chunksStored } = await storeDocumentChunks(file.name, text);
@@ -47,10 +47,12 @@ export async function POST(request: NextRequest) {
       fileName: file.name,
       size: file.size,
       type: file.type,
-      text: text.slice(0, 500), // Return preview only
+      text: text.slice(0, 500),
       pages: totalPages,
       chunksStored,
-      message: "PDF processed. Call /api/analyze with fileName to get risk analysis.",
+      hasStructuredContent,
+      message:
+        "PDF processed successfully. Analysis ready.",
     });
   } catch (err) {
     console.error("Upload error:", err);
