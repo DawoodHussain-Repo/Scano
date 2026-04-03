@@ -1,5 +1,6 @@
-import { Shield, Github, Zap, Brain, Database } from "lucide-react";
+import { Shield, Zap, Brain, Database } from "lucide-react";
 import { SiNextdotjs, SiTypescript, SiTailwindcss } from "react-icons/si";
+import { FaGithub } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -94,7 +95,7 @@ export default function Footer() {
               className="text-slate-400 hover:text-slate-900 transition-colors"
               aria-label="GitHub"
             >
-              <Github className="w-5 h-5" />
+              <FaGithub className="w-5 h-5" />
             </a>
           </div>
         </div>
